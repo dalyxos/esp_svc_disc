@@ -4,26 +4,21 @@
 #include "freertos/task.h"
 #include "freertos/event_groups.h"
 #include "esp_system.h"
-#include "esp_wifi.h"
+#include "esp_eth.h"
 #include "esp_event.h"
 #include "esp_log.h"
 #include "nvs_flash.h"
 #include "esp_netif.h"
 #include "esp_svc_disc.h"
 
-// WiFi credentials - modify these for your network
-#define WIFI_SSID "YOUR_WIFI_SSID"
-#define WIFI_PASS "YOUR_WIFI_PASSWORD"
-
 static const char *TAG = "SVC_DISC_EXAMPLE";
 
-// Event group for WiFi connection
-static EventGroupHandle_t s_wifi_event_group;
-#define WIFI_CONNECTED_BIT BIT0
-#define WIFI_FAIL_BIT      BIT1
+// Event group for Ethernet connection
+static EventGroupHandle_t s_eth_event_group;
+#define ETH_CONNECTED_BIT BIT0
+#define ETH_FAIL_BIT      BIT1
 
-static int s_retry_num = 0;
-static const int WIFI_MAXIMUM_RETRY = 5;
+static esp_netif_t *eth_netif = NULL;
 
 // Service discovery callback
 static void service_discovered_callback(const char* service_name, 
@@ -47,83 +42,114 @@ static void service_discovered_callback(const char* service_name,
     ESP_LOGI(TAG, "========================");
 }
 
-// WiFi event handler
-static void event_handler(void* arg, esp_event_base_t event_base,
-                         int32_t event_id, void* event_data)
+// Ethernet event handler
+static void eth_event_handler(void* arg, esp_event_base_t event_base,
+                             int32_t event_id, void* event_data)
 {
-    if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
-        esp_wifi_connect();
-    } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
-        if (s_retry_num < WIFI_MAXIMUM_RETRY) {
-            esp_wifi_connect();
-            s_retry_num++;
-            ESP_LOGI(TAG, "retry to connect to the AP");
-        } else {
-            xEventGroupSetBits(s_wifi_event_group, WIFI_FAIL_BIT);
-        }
-        ESP_LOGI(TAG,"connect to the AP fail");
-    } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
-        ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
-        ESP_LOGI(TAG, "got ip:" IPSTR, IP2STR(&event->ip_info.ip));
-        s_retry_num = 0;
-        xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
+    uint8_t mac_addr[6] = {0};
+    esp_eth_handle_t eth_handle = *(esp_eth_handle_t *)event_data;
+
+    switch (event_id) {
+    case ETHERNET_EVENT_CONNECTED:
+        esp_eth_ioctl(eth_handle, ETH_CMD_G_MAC_ADDR, mac_addr);
+        ESP_LOGI(TAG, "Ethernet Link Up");
+        ESP_LOGI(TAG, "Ethernet HW Addr %02x:%02x:%02x:%02x:%02x:%02x",
+                 mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
+        break;
+    case ETHERNET_EVENT_DISCONNECTED:
+        ESP_LOGI(TAG, "Ethernet Link Down");
+        xEventGroupSetBits(s_eth_event_group, ETH_FAIL_BIT);
+        break;
+    case ETHERNET_EVENT_START:
+        ESP_LOGI(TAG, "Ethernet Started");
+        break;
+    case ETHERNET_EVENT_STOP:
+        ESP_LOGI(TAG, "Ethernet Stopped");
+        break;
+    default:
+        break;
     }
 }
 
-// Initialize WiFi in station mode
-static esp_err_t wifi_init_sta(void)
+// IP event handler
+static void ip_event_handler(void* arg, esp_event_base_t event_base,
+                            int32_t event_id, void* event_data)
 {
-    s_wifi_event_group = xEventGroupCreate();
+    if (event_base == IP_EVENT && event_id == IP_EVENT_ETH_GOT_IP) {
+        ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
+        ESP_LOGI(TAG, "Ethernet Got IP Address");
+        ESP_LOGI(TAG, "~~~~~~~~~~~");
+        ESP_LOGI(TAG, "ETHIP:" IPSTR, IP2STR(&event->ip_info.ip));
+        ESP_LOGI(TAG, "ETHMASK:" IPSTR, IP2STR(&event->ip_info.netmask));
+        ESP_LOGI(TAG, "ETHGW:" IPSTR, IP2STR(&event->ip_info.gw));
+        ESP_LOGI(TAG, "~~~~~~~~~~~");
+        xEventGroupSetBits(s_eth_event_group, ETH_CONNECTED_BIT);
+    }
+}
+
+// Initialize Ethernet for QEMU
+static esp_err_t ethernet_init(void)
+{
+    s_eth_event_group = xEventGroupCreate();
 
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
-    esp_netif_create_default_wifi_sta();
 
-    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-    ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+    // Create default ethernet netif
+    esp_netif_config_t cfg = ESP_NETIF_DEFAULT_ETH();
+    eth_netif = esp_netif_new(&cfg);
 
-    esp_event_handler_instance_t instance_any_id;
-    esp_event_handler_instance_t instance_got_ip;
-    ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT,
-                                                        ESP_EVENT_ANY_ID,
-                                                        &event_handler,
-                                                        NULL,
-                                                        &instance_any_id));
-    ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT,
-                                                        IP_EVENT_STA_GOT_IP,
-                                                        &event_handler,
-                                                        NULL,
-                                                        &instance_got_ip));
+    // Register event handlers
+    ESP_ERROR_CHECK(esp_event_handler_register(ETH_EVENT, ESP_EVENT_ANY_ID, &eth_event_handler, NULL));
+    ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_ETH_GOT_IP, &ip_event_handler, NULL));
 
-    wifi_config_t wifi_config = {
-        .sta = {
-            .ssid = WIFI_SSID,
-            .password = WIFI_PASS,
-            .threshold.authmode = WIFI_AUTH_WPA2_PSK,
-        },
-    };
-    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA) );
-    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config) );
-    ESP_ERROR_CHECK(esp_wifi_start() );
+    // Initialize Ethernet driver for QEMU
+    eth_mac_config_t mac_config = ETH_MAC_DEFAULT_CONFIG();
+    eth_phy_config_t phy_config = ETH_PHY_DEFAULT_CONFIG();
+    phy_config.phy_addr = 1;
+    phy_config.reset_gpio_num = -1;
 
-    ESP_LOGI(TAG, "wifi_init_sta finished.");
+#if CONFIG_IDF_TARGET_ESP32
+    // For ESP32 QEMU, use ESP32 EMAC with updated API
+    eth_esp32_emac_config_t esp32_config = ETH_ESP32_EMAC_DEFAULT_CONFIG();
+    esp32_config.smi_mdc_gpio_num = 23;
+    esp32_config.smi_mdio_gpio_num = 18;
+    esp_eth_mac_t *mac = esp_eth_mac_new_esp32(&esp32_config, &mac_config);
+    esp_eth_phy_t *phy = esp_eth_phy_new_rtl8201(&phy_config);
+#else
+    // For other targets, use OpenCores Ethernet
+    esp_eth_mac_t *mac = esp_eth_mac_new_openeth(&mac_config);
+    esp_eth_phy_t *phy = esp_eth_phy_new_dp83848(&phy_config);
+#endif
+
+    esp_eth_config_t config = ETH_DEFAULT_CONFIG(mac, phy);
+    esp_eth_handle_t eth_handle = NULL;
+    ESP_ERROR_CHECK(esp_eth_driver_install(&config, &eth_handle));
+
+    // Attach Ethernet driver to TCP/IP stack
+    ESP_ERROR_CHECK(esp_netif_attach(eth_netif, esp_eth_new_netif_glue(eth_handle)));
+
+    // Start Ethernet driver
+    ESP_ERROR_CHECK(esp_eth_start(eth_handle));
+
+    ESP_LOGI(TAG, "Ethernet initialization finished.");
 
     // Wait for connection
-    EventBits_t bits = xEventGroupWaitBits(s_wifi_event_group,
-            WIFI_CONNECTED_BIT | WIFI_FAIL_BIT,
+    EventBits_t bits = xEventGroupWaitBits(s_eth_event_group,
+            ETH_CONNECTED_BIT | ETH_FAIL_BIT,
             pdFALSE,
             pdFALSE,
-            portMAX_DELAY);
+            pdMS_TO_TICKS(10000));  // 10 second timeout
 
-    if (bits & WIFI_CONNECTED_BIT) {
-        ESP_LOGI(TAG, "connected to ap SSID:%s", WIFI_SSID);
+    if (bits & ETH_CONNECTED_BIT) {
+        ESP_LOGI(TAG, "Ethernet connected successfully");
         return ESP_OK;
-    } else if (bits & WIFI_FAIL_BIT) {
-        ESP_LOGI(TAG, "Failed to connect to SSID:%s", WIFI_SSID);
+    } else if (bits & ETH_FAIL_BIT) {
+        ESP_LOGI(TAG, "Ethernet connection failed");
         return ESP_FAIL;
     } else {
-        ESP_LOGE(TAG, "UNEXPECTED EVENT");
-        return ESP_FAIL;
+        ESP_LOGI(TAG, "Ethernet connection timeout");
+        return ESP_ERR_TIMEOUT;
     }
 }
 
@@ -206,10 +232,10 @@ void app_main(void)
     }
     ESP_ERROR_CHECK(ret);
     
-    // Initialize WiFi
-    ESP_LOGI(TAG, "Initializing WiFi...");
-    if (wifi_init_sta() != ESP_OK) {
-        ESP_LOGE(TAG, "WiFi initialization failed");
+    // Initialize Ethernet
+    ESP_LOGI(TAG, "Initializing Ethernet...");
+    if (ethernet_init() != ESP_OK) {
+        ESP_LOGE(TAG, "Ethernet initialization failed");
         return;
     }
     

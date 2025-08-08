@@ -1,7 +1,7 @@
 # ESP Service Discovery Test Environment
 # ====================================
 
-.PHONY: help build up down test clean logs shell esp-shell test-shell status
+.PHONY: help build up down test clean logs shell esp-shell test-shell status qemu qemu-build
 
 # Default target
 help:
@@ -19,6 +19,10 @@ help:
 	@echo "  make shell      - Open shell in test-runner container"
 	@echo "  make esp-shell  - Open shell in ESP-IDF container"
 	@echo "  make test-shell - Open shell in test-runner for manual testing"
+	@echo ""
+	@echo "QEMU Testing:"
+	@echo "  make qemu-build - Build ESP project for QEMU"
+	@echo "  make qemu       - Run ESP project in QEMU emulator"
 	@echo ""
 	@echo "Individual service commands:"
 	@echo "  make logs-web   - Show web server logs"
@@ -116,7 +120,7 @@ verify:
 # Development helpers
 build-esp:
 	@echo "🔨 Building ESP-IDF example..."
-	docker-compose run --rm esp-idf bash -c "cd example && idf.py build"
+	docker-compose run --rm esp-idf bash -c "cd example && idf.py reconfigure && idf.py build"
 
 build-component:
 	@echo "🔨 Building ESP component..."
@@ -129,3 +133,18 @@ network-info:
 	@echo ""
 	@echo "Container IPs:"
 	@docker-compose ps -q | xargs docker inspect -f '{{.Name}} - {{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}'
+
+# QEMU Testing
+qemu-build:
+	@echo "🔨 Building ESP project for QEMU..."
+	docker-compose run --rm esp-idf bash -c "cd example && idf.py fullclean && idf.py reconfigure && idf.py build"
+	@echo "✅ Build complete. Flash image ready for QEMU."
+
+qemu:
+	@echo "🚀 Running ESP Service Discovery in QEMU..."
+	@echo "Note: This requires QEMU with Xtensa support on the host system"
+	@if [ -f "./run-qemu.sh" ]; then \
+		chmod +x ./run-qemu.sh && ./run-qemu.sh; \
+	else \
+		echo "❌ run-qemu.sh not found. Please ensure you're in the project root."; \
+	fi

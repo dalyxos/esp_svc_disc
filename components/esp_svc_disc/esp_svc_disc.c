@@ -1,6 +1,6 @@
 #include "esp_svc_disc.h"
 #include "esp_log.h"
-#include "esp_wifi.h"
+#include "esp_eth.h"
 #include "esp_netif.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"

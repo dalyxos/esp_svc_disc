@@ -126,14 +126,18 @@ void app_main(void)
 
 ## Building the Example
 
+### Hardware Testing
+
 1. **Prerequisites**:
    - ESP-IDF v4.4 or later
    - WiFi network for testing
+   - ESP-IDF Component Manager (included with ESP-IDF v4.4+)
 
 2. **Configuration**:
 
    ```bash
    cd example
+   idf.py reconfigure  # Install managed components
    idf.py menuconfig
    ```
 
@@ -142,9 +146,56 @@ void app_main(void)
 3. **Build and Flash**:
 
    ```bash
+   idf.py reconfigure  # Install dependencies
    idf.py build
    idf.py flash monitor
    ```
+
+### QEMU Testing
+
+For testing without physical hardware, you can use QEMU emulation:
+
+1. **Prerequisites**:
+   - ESP-IDF v4.4 or later
+   - QEMU with Xtensa support
+   - ESP-IDF Component Manager
+
+2. **Quick Start**:
+
+   **Linux/macOS:**
+
+   ```bash
+   chmod +x run-qemu.sh
+   ./run-qemu.sh
+   ```
+
+   **Windows:**
+
+   ```cmd
+   run-qemu.bat
+   ```
+
+3. **Manual QEMU Setup**:
+
+   ```bash
+   cd example
+   idf.py reconfigure  # Install dependencies
+   idf.py build
+   
+   # Create QEMU flash image
+   esptool.py --chip esp32 merge_bin -o build/qemu/flash_image.bin \
+       --flash_mode dio --flash_freq 40m --flash_size 4MB \
+       0x1000 build/bootloader/bootloader.bin \
+       0x10000 build/esp_svc_disc_example.bin \
+       0x8000 build/partition_table/partition-table.bin
+   
+   # Run QEMU
+   qemu-system-xtensa -machine esp32 -nographic \
+       -drive file=build/qemu/flash_image.bin,if=mtd,format=raw \
+       -netdev user,id=net0 -device open_eth,netdev=net0
+   ```
+
+**Note**: The QEMU version uses Ethernet instead of WiFi for network connectivity.
 
 ## Docker Test Environment
 
@@ -278,10 +329,12 @@ The component can discover any mDNS service type. Common examples include:
 
 ## Dependencies
 
-- ESP-IDF mDNS component
-- ESP WiFi component
+- ESP-IDF mDNS component (managed via ESP-IDF Component Manager)
+- ESP Ethernet component
 - ESP Event component
 - NVS Flash component
+
+The mDNS component is automatically downloaded and managed by the ESP-IDF Component Manager when you run `idf.py reconfigure`.
 
 ## License
 

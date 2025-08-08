@@ -1,0 +1,5 @@
+## IDF Component Manager Manifest File for ESP Service Discovery Component
+dependencies:
+  espressif/mdns: "^1.2.0"
+  idf:
+    version: ">=4.4.0"
