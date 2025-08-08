@@ -1,0 +1,15 @@
+<?xml version="1.0" standalone='no'?>
+<!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+<service-group>
+  <name replace-wildcards="yes">ESP Test Web Server on %h</name>
+  <service>
+    <type>_http._tcp</type>
+    <port>8080</port>
+    <host-name>esp-test-webserver.local</host-name>
+    <txt-record>version=1.0.0</txt-record>
+    <txt-record>path=/</txt-record>
+    <txt-record>description=ESP Test HTTP Server</txt-record>
+    <txt-record>api=true</txt-record>
+    <txt-record>ssl=false</txt-record>
+  </service>
+</service-group>

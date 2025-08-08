@@ -1,0 +1,13 @@
+<?xml version="1.0" standalone='no'?>
+<!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+<service-group>
+  <name replace-wildcards="yes">ESP Test SMB Server on %h</name>
+  <service>
+    <type>_smb._tcp</type>
+    <port>445</port>
+    <host-name>esp-test-smbserver.local</host-name>
+    <txt-record>version=4.0</txt-record>
+    <txt-record>description=ESP Test SMB/CIFS Server</txt-record>
+    <txt-record>shares=public,docs</txt-record>
+  </service>
+</service-group>

@@ -1,0 +1,21 @@
+{
+  "name": "ESP Test Web Server",
+  "description": "HTTP server for testing ESP service discovery",
+  "service_type": "_http._tcp",
+  "protocol": "HTTP/1.1",
+  "port": 80,
+  "host_port": 8080,
+  "txt_records": {
+    "version": "1.0.0",
+    "path": "/",
+    "description": "Test server for ESP mDNS discovery",
+    "api": "true",
+    "ssl": "false"
+  },
+  "capabilities": [
+    "HTTP GET",
+    "HTTP POST",
+    "JSON API",
+    "Static content"
+  ]
+}

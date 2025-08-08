@@ -1,0 +1,14 @@
+{
+  "status": "running",
+  "service": "ESP Test Web Server",
+  "type": "_http._tcp",
+  "port": 80,
+  "version": "1.0.0",
+  "timestamp": "2025-08-08T00:00:00Z",
+  "endpoints": [
+    "/",
+    "/api/status",
+    "/api/info",
+    "/test"
+  ]
+}

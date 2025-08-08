@@ -1,0 +1,19 @@
+<?xml version="1.0" standalone='no'?>
+<!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+<service-group>
+  <name replace-wildcards="yes">ESP Test Modbus Server on %h</name>
+  <service>
+    <type>_modbus._tcp</type>
+    <port>502</port>
+    <host-name>esp-test-modbusserver.local</host-name>
+    <txt-record>version=1.0.0</txt-record>
+    <txt-record>device_id=1</txt-record>
+    <txt-record>protocol=modbus-tcp</txt-record>
+    <txt-record>vendor=ESP Test Modbus</txt-record>
+    <txt-record>model=ESP-MODBUS-V1</txt-record>
+    <txt-record>description=ESP Service Discovery Test Modbus Server</txt-record>
+    <txt-record>registers=coils,discrete_inputs,holding_registers,input_registers</txt-record>
+    <txt-record>functions=1,2,3,4,5,6,15,16</txt-record>
+    <txt-record>unit_id=1</txt-record>
+  </service>
+</service-group>

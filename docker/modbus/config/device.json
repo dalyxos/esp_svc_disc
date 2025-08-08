@@ -1,0 +1,73 @@
+{
+  "device": {
+    "id": 1,
+    "name": "ESP Test Modbus Device",
+    "vendor": "ESP Test Modbus",
+    "model": "ESP-MODBUS-V1",
+    "version": "1.0.0",
+    "description": "Test Modbus TCP server for ESP service discovery"
+  },
+  "registers": {
+    "coils": {
+      "start_address": 0,
+      "count": 100,
+      "description": "Digital outputs (read/write)"
+    },
+    "discrete_inputs": {
+      "start_address": 0,
+      "count": 100,
+      "description": "Digital inputs (read-only)"
+    },
+    "input_registers": {
+      "start_address": 0,
+      "count": 100,
+      "description": "Analog inputs (read-only)",
+      "mappings": {
+        "0": "Temperature (°C * 10)",
+        "1": "Humidity (% * 10)",
+        "2": "Pressure (kPa)",
+        "3": "Voltage (mV)",
+        "4": "Current (mA)",
+        "5": "Power (W)",
+        "6": "Energy Counter (Wh)",
+        "7": "Battery Level (%)",
+        "8": "CPU Temperature (°C)",
+        "9": "Signal Strength (%)"
+      }
+    },
+    "holding_registers": {
+      "start_address": 0,
+      "count": 100,
+      "description": "Configuration registers (read/write)",
+      "mappings": {
+        "0": "Device Enable (0/1)",
+        "1": "Setpoint Temperature (°C)",
+        "2": "Setpoint Humidity (%)",
+        "3": "Alarm Threshold",
+        "4": "Sample Rate (seconds)",
+        "5": "Reset Counter",
+        "6": "Device Address",
+        "7": "Baud Rate",
+        "8": "Parity (0=none, 1=odd, 2=even)",
+        "9": "Stop Bits"
+      }
+    }
+  },
+  "supported_functions": [
+    "1 - Read Coils",
+    "2 - Read Discrete Inputs", 
+    "3 - Read Holding Registers",
+    "4 - Read Input Registers",
+    "5 - Write Single Coil",
+    "6 - Write Single Register",
+    "15 - Write Multiple Coils",
+    "16 - Write Multiple Registers"
+  ],
+  "network": {
+    "protocol": "Modbus TCP",
+    "port": 502,
+    "unit_id": 1,
+    "timeout": 5000,
+    "mdns_service": "_modbus._tcp.local."
+  }
+}

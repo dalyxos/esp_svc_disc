@@ -1,0 +1,4 @@
+This is a test file for ESP service discovery.
+ESP32 can discover this FTP server using mDNS.
+Service type: _ftp._tcp
+Timestamp: 2025-08-08

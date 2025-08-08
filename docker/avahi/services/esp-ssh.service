@@ -1,0 +1,12 @@
+<?xml version="1.0" standalone='no'?>
+<!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+<service-group>
+  <name replace-wildcards="yes">ESP Test SSH Server on %h</name>
+  <service>
+    <type>_ssh._tcp</type>
+    <port>2222</port>
+    <host-name>esp-test-sshserver.local</host-name>
+    <txt-record>version=OpenSSH_8.0</txt-record>
+    <txt-record>description=ESP Test SSH Server</txt-record>
+  </service>
+</service-group>

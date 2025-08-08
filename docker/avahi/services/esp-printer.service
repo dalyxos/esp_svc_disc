@@ -1,0 +1,33 @@
+<?xml version="1.0" standalone='no'?>
+<!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+<service-group>
+  <name replace-wildcards="yes">ESP Test Printer on %h</name>
+  <service>
+    <type>_ipp._tcp</type>
+    <port>631</port>
+    <host-name>esp-test-printserver.local</host-name>
+    <txt-record>txtvers=1</txt-record>
+    <txt-record>qtotal=1</txt-record>
+    <txt-record>rp=printers/ESP-Test-Printer</txt-record>
+    <txt-record>ty=ESP Test Virtual Printer</txt-record>
+    <txt-record>adminurl=http://esp-test-printserver.local:631/admin</txt-record>
+    <txt-record>note=ESP Service Discovery Test Printer</txt-record>
+    <txt-record>priority=0</txt-record>
+    <txt-record>product=(GPL Ghostscript)</txt-record>
+    <txt-record>printer-state=3</txt-record>
+    <txt-record>printer-type=0x801046</txt-record>
+    <txt-record>Transparent=T</txt-record>
+    <txt-record>Binary=T</txt-record>
+    <txt-record>Fax=F</txt-record>
+    <txt-record>Color=T</txt-record>
+    <txt-record>Duplex=T</txt-record>
+    <txt-record>Staple=F</txt-record>
+    <txt-record>Copies=T</txt-record>
+    <txt-record>Collate=F</txt-record>
+    <txt-record>Punch=F</txt-record>
+    <txt-record>Bind=F</txt-record>
+    <txt-record>Sort=F</txt-record>
+    <txt-record>Scan=F</txt-record>
+    <txt-record>pdl=application/octet-stream,application/pdf,application/postscript,image/jpeg,image/png,image/urf,text/plain</txt-record>
+  </service>
+</service-group>

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP Test Web Server</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        .service-info {
+            background-color: #e7f3ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .status {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #c3e6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌐 ESP Service Discovery Test Server</h1>
+        
+        <div class="status">
+            ✅ Web Server is running and discoverable via mDNS
+        </div>
+        
+        <div class="service-info">
+            <h3>Service Information</h3>
+            <ul>
+                <li><strong>Service Type:</strong> _http._tcp</li>
+                <li><strong>Port:</strong> 80 (mapped to 8080 on host)</li>
+                <li><strong>Description:</strong> Test HTTP server for ESP service discovery</li>
+                <li><strong>Version:</strong> 1.0.0</li>
+                <li><strong>Protocol:</strong> HTTP/1.1</li>
+            </ul>
+        </div>
+        
+        <h3>🔍 Available Endpoints</h3>
+        <ul>
+            <li><a href="/api/status">/api/status</a> - Service status</li>
+            <li><a href="/api/info">/api/info</a> - Service information</li>
+            <li><a href="/test">/test</a> - Test endpoint</li>
+        </ul>
+        
+        <h3>📡 Other Test Services</h3>
+        <p>This Docker environment also provides:</p>
+        <ul>
+            <li><strong>FTP Server</strong> - _ftp._tcp on port 21</li>
+            <li><strong>SSH Server</strong> - _ssh._tcp on port 2222</li>
+            <li><strong>Print Server</strong> - _ipp._tcp on port 631</li>
+            <li><strong>SMB Server</strong> - _smb._tcp on ports 139/445</li>
+            <li><strong>Modbus Server</strong> - _modbus._tcp on port 502</li>
+        </ul>
+        
+        <p><em>All services are configured to be discoverable via mDNS for testing the ESP service discovery component.</em></p>
+    </div>
+</body>
+</html>

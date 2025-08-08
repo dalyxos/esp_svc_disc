@@ -1,0 +1,46 @@
+# ESP-IDF build artifacts
+build/
+sdkconfig
+sdkconfig.old
+*.pyc
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+
+# Dependencies
+managed_components/
+
+# Flash and monitor artifacts
+*.bin
+*.elf
+*.map
+
+# Docker volumes and data
+docker/ssh-config/ssh_host_*
+docker/cups-config/*
+docker/ftp-data/data/*
+!docker/ftp-data/data/.gitkeep
+docker/smb-data/*
+!docker/smb-data/.gitkeep
+docker/modbus/logs/
+*.pyc
+__pycache__/
+
+# Docker artifacts (optional - uncomment if you don't want to commit these)
+# .docker/
