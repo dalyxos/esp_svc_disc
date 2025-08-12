@@ -109,18 +109,9 @@ static esp_err_t ethernet_init(void)
     phy_config.phy_addr = 1;
     phy_config.reset_gpio_num = -1;
 
-#if CONFIG_IDF_TARGET_ESP32
-    // For ESP32 QEMU, use ESP32 EMAC with updated API
-    eth_esp32_emac_config_t esp32_config = ETH_ESP32_EMAC_DEFAULT_CONFIG();
-    esp32_config.smi_mdc_gpio_num = 23;
-    esp32_config.smi_mdio_gpio_num = 18;
-    esp_eth_mac_t *mac = esp_eth_mac_new_esp32(&esp32_config, &mac_config);
-    esp_eth_phy_t *phy = esp_eth_phy_new_rtl8201(&phy_config);
-#else
     // For other targets, use OpenCores Ethernet
     esp_eth_mac_t *mac = esp_eth_mac_new_openeth(&mac_config);
     esp_eth_phy_t *phy = esp_eth_phy_new_dp83848(&phy_config);
-#endif
 
     esp_eth_config_t config = ETH_DEFAULT_CONFIG(mac, phy);
     esp_eth_handle_t eth_handle = NULL;

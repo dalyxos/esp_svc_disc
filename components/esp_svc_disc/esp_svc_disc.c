@@ -22,7 +22,7 @@ static void discovery_task(void *pvParameters)
 {
     esp_svc_disc_config_t *config = (esp_svc_disc_config_t *)pvParameters;
     
-    ESP_LOGI(TAG, "Starting service discovery for %s.%s", config->service_type, config->protocol);
+    ESP_LOGI(TAG, "Starting service discovery for %s%s", config->service_type, config->protocol);
     
     mdns_result_t *results = NULL;
     esp_err_t err = mdns_query_ptr(config->service_type, config->protocol, config->timeout_ms, 20, &results);

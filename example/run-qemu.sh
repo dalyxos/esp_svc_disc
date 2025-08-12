@@ -8,6 +8,9 @@ set -e
 echo "🚀 ESP Service Discovery QEMU Test"
 echo "=================================="
 
+/usr/bin/python3 /opt/esp/idf/tools/idf_tools.py install
+source /opt/esp/idf/export.sh
+
 # Check if required tools are available
 if ! command -v qemu-system-xtensa &> /dev/null; then
     echo "❌ QEMU for Xtensa not found. Please install qemu-system-xtensa"
@@ -17,7 +20,7 @@ if ! command -v qemu-system-xtensa &> /dev/null; then
 fi
 
 # Navigate to example directory
-cd "$(dirname "$0")"
+# cd "$(dirname "$0")"
 
 # Verify we're in the example directory
 if [ ! -f "CMakeLists.txt" ]; then
@@ -43,11 +46,11 @@ echo "📦 Creating QEMU flash image..."
 mkdir -p build/qemu
 
 # Merge binary files for QEMU
-esptool.py --chip esp32 merge_bin -o build/qemu/flash_image.bin \
-    --flash_mode dio --flash_freq 40m --flash_size 4MB \
-    0x1000 build/bootloader/bootloader.bin \
-    0x10000 build/esp_svc_disc_example.bin \
-    0x8000 build/partition_table/partition-table.bin
+esptool.py --chip=esp32 merge_bin \
+    --output=build/qemu/flash_image.bin \
+    --fill-flash-size=4MB \
+    --flash_mode dio --flash_freq 40m \
+    --flash_size 2MB 0x1000 build/bootloader/bootloader.bin 0x10000 build/esp_svc_disc_example.bin 0x8000 build/partition_table/partition-table.bin
 
 echo "✅ QEMU flash image created: build/qemu/flash_image.bin"
 
@@ -64,20 +67,24 @@ echo ""
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
     echo "Setting up TAP interface (may require sudo)..."
     # Note: This requires additional setup on the host system
-    sudo ip tuntap add dev tap0 mode tap 2>/dev/null || echo "TAP interface may already exist"
-    sudo ip link set dev tap0 up 2>/dev/null || echo "TAP interface setup may require manual configuration"
-    sudo ip addr add 172.20.0.1/24 dev tap0 2>/dev/null || echo "TAP IP may already be configured"
+    ip tuntap add dev tap0 mode tap 2>/dev/null || echo "TAP interface may already exist"
+    ip link set dev tap0 up 2>/dev/null || echo "TAP interface setup may require manual configuration"
+    ip addr add 172.20.0.1/24 dev tap0 2>/dev/null || echo "TAP IP may already be configured"
 fi
 
 # Run QEMU
+# qemu-system-xtensa \
+#     -machine esp32 -m 4M \
+#     -nographic \
+#     -drive file=build/qemu/flash_image.bin,if=mtd,format=raw \
+#     -nic user,model=open_eth
 qemu-system-xtensa \
-    -machine esp32 \
-    -nographic \
-    -drive file=build/qemu/flash_image.bin,if=mtd,format=raw \
-    -netdev tap,id=net0,ifname=tap0,script=no,downscript=no \
-    -device open_eth,netdev=net0 \
-    -serial mon:stdio \
-    -S -gdb tcp::3333
+    -M esp32 -m 4M \
+    -drive file=/workspace/example/build/qemu_flash.bin,if=mtd,format=raw \
+    -drive file=/workspace/example/build/qemu_efuse.bin,if=none,format=raw,id=efuse \
+    -global driver=nvram.esp32.efuse,property=drive,value=efuse \
+    -global driver=timer.esp32.timg,property=wdt_disable,value=true \
+    -nic user,model=open_eth -nographic # -serial tcp::5555,server
 
 echo ""
 echo "QEMU session ended."
